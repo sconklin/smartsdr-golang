@@ -13,6 +13,9 @@ type TopicPub struct {
 func simpleSplit(prefix string, sep string, tokens []string) []TopicPub {
 	var topics []TopicPub
 	for _, pair := range tokens {
+		if strings.TrimSpace(pair) == "" {
+			continue
+		}
 		parts := strings.Split(pair, "=")
 		if len(parts) != 2 {
 			log.Infof("simpleSplit: Bad parse of: %s", pair)
@@ -72,20 +75,27 @@ func processStatus(handle uint32, status string) {
 			startidx = 1
 		}
 		_ = parseRadio(prefix, respsegs[startidx:])
-	case "transmit":
-	case "waveform":
+	case "transmit", "waveform", "atu", "interlock":
+		_ = simpleSplit(respsegs[0], " ", respsegs[1:])
 	case "xvtr":
-	case "atu":
+		// next field is xvtr number
+		prefix = prefix + "/" + strings.Title(respsegs[1])
+		startidx = 2
+		_ = simpleSplit(prefix, " ", respsegs[2:])
 	case "amplifier":
 	case "memories":
 	case "slice":
+		// next field is slice number
+		prefix = prefix + "/" + strings.Title(respsegs[1])
+		startidx = 2
+		_ = simpleSplit(prefix, " ", respsegs[2:])
 	case "foundation":
 	case "gps":
 	case "scu":
 	case "tx":
 	case "eq":
 		switch respsegs[1] {
-		case "rx", "rxsc":
+		case "rx", "rxsc", "tx", "txsc":
 			prefix = prefix + "/" + strings.Title(respsegs[1])
 			startidx = 2
 			_ = simpleSplit(prefix, " ", respsegs[2:])
@@ -94,8 +104,6 @@ func processStatus(handle uint32, status string) {
 
 		}
 	case "usb_cable":
-	case "interlock":
-		_ = simpleSplit(respsegs[0], " ", respsegs[1:])
 	default:
 		log.Infof("Unknown Status key: %s", respsegs[0])
 	}
