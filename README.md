@@ -10,6 +10,8 @@ This is intended to be an experimental gateway between the Flex Radio API and an
 
 It is forked from [smartsdr-golang](https://github.com/baobrien/smartsdr-golang)
 
+[Information about the Flex API](http://wiki.flexradio.com/index.php?title=SmartSDR_TCP/IP_API)
+
 By default, UDP is blocked by the Ubuntu Firewall, open the ports like this:
 sudo ufw allow from 172.31.0.0/8 to any port 4992 proto udp
 

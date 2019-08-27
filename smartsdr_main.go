@@ -149,12 +149,26 @@ func main() {
 			fmt.Println(err)
 		}
 	}()
-	/* Register status handler to print all status messages */
-	api.RegisterStatusHandler("", func(handle uint32, status string) {
-		// This will move to an MQTT publisher
-		log.Infof("Status: %s", status)
-	})
 
-	time.Sleep(time.Second * 100)
+	/* Register status handler to print all status messages */
+	api.RegisterStatusHandler("", processStatus)
+
+	/* Subscribe to some things */
+	api.DoCommand("sub xvtr all", time.Millisecond*100)
+	api.DoCommand("sub atu all", time.Millisecond*100)
+	api.DoCommand("sub amplifier all", time.Millisecond*100)
+	api.DoCommand("sub memories all", time.Millisecond*100)
+	api.DoCommand("sub slice all", time.Millisecond*100)
+	api.DoCommand("sub foundation all", time.Millisecond*100)
+	api.DoCommand("sub gps all", time.Millisecond*100)
+	api.DoCommand("sub radio all", time.Millisecond*100)
+	api.DoCommand("sub scu all", time.Millisecond*100)
+	api.DoCommand("sub tx all", time.Millisecond*100)
+	api.DoCommand("sub usb_cable all", time.Millisecond*100)
+
+	for {
+		time.Sleep(time.Second * 1)
+	}
+
 	os.Exit(0)
 }

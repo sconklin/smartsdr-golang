@@ -220,7 +220,6 @@ func (tcpi *SmartAPIInterface) InterfaceLoop() {
 			}
 			tcpi.InflightCmds[seq] = cmd
 		case line := <-lineChan:
-			log.Debugf("Rx Line: %s", line)
 			rdchar := line[0]
 			switch rdchar {
 			//Parse version string
@@ -257,6 +256,9 @@ func (tcpi *SmartAPIInterface) InterfaceLoop() {
 						}
 					}
 				}
+			case 'M':
+				// TODO make a handler
+				log.Infof("Rx Message: %s", line)
 			case 'C':
 				tcpi.handleCommand(line[1:])
 			case 'S':
