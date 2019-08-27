@@ -151,7 +151,8 @@ func main() {
 	}()
 	/* Register status handler to print all status messages */
 	api.RegisterStatusHandler("", func(handle uint32, status string) {
-		fmt.Println(status)
+		// This will move to an MQTT publisher
+		log.Infof("Status: %s", status)
 	})
 
 	time.Sleep(time.Second * 100)
