@@ -10,10 +10,9 @@ type TopicPub struct {
 }
 
 // parses a line full of "key=value" pairs separated by a separator
-func simpleSplit(prefix string, sep string, line string) []TopicPub {
+func simpleSplit(prefix string, sep string, tokens []string) []TopicPub {
 	var topics []TopicPub
-	pairs := strings.Split(line, sep)
-	for _, pair := range pairs {
+	for _, pair := range tokens {
 		parts := strings.Split(pair, "=")
 		if len(parts) != 2 {
 			log.Infof("simpleSplit: Bad parse of: %s", pair)
@@ -28,23 +27,10 @@ func simpleSplit(prefix string, sep string, line string) []TopicPub {
 }
 
 // parseRadio parses lines with the radio keyword
-func parseRadio(prefix string, sep string, line string) []TopicPub {
+func parseRadio(prefix string, tokens []string) []TopicPub {
 	var topics []TopicPub
-	tokens := strings.Split(line, sep)
-	startidx := 0
 
-	if tokens[0] == "filter_sharpness" {
-		prefix = prefix + "/" + strings.Title(tokens[0]) + "/" + strings.Title(tokens[1])
-		startidx = 2
-	} else if tokens[0] == "static_net_params" {
-		prefix = prefix + "/" + strings.Title(tokens[0])
-		startidx = 1
-	} else if tokens[0] == "oscillator" {
-		prefix = prefix + "/" + strings.Title(tokens[0])
-		startidx = 1
-	}
-
-	for _, pair := range tokens[startidx:] {
+	for _, pair := range tokens {
 		var value string
 		parts := strings.Split(pair, "=")
 
@@ -69,37 +55,48 @@ func parseRadio(prefix string, sep string, line string) []TopicPub {
 func processStatus(handle uint32, status string) {
 	// This will move to an MQTT publisher
 	log.Infof("Status: %s", status)
-	respsegs := strings.SplitN(status, " ", 2)
-	if len(respsegs) == 2 {
-		switch respsegs[0] {
-		case "radio":
-			_ = parseRadio(respsegs[0], " ", respsegs[1])
-		case "transmit":
-		case "waveform":
-		case "xvtr":
-		case "atu":
-		case "amplifier":
-		case "memories":
-		case "slice":
-		case "foundation":
-		case "gps":
-		case "scu":
-		case "tx":
-		case "eq":
-			eqparts := strings.SplitN(respsegs[1], " ", 2)
-			if eqparts[0] == "rx" || eqparts[0] == "rxsc" {
-				topic := respsegs[0] + "/" + strings.Title(eqparts[0])
-				_ = simpleSplit(topic, " ", eqparts[1])
+	respsegs := strings.Split(status, " ")
+	var startidx = 1
+	prefix := respsegs[0]
 
-			}
-		case "usb_cable":
-		case "interlock":
-			_ = simpleSplit(respsegs[0], " ", respsegs[1])
+	switch respsegs[0] {
+	case "radio":
+		switch respsegs[1] {
+		case "filter_sharpness":
+			prefix = prefix + "/" + strings.Title(respsegs[1]) + "/" + strings.Title(respsegs[2])
+			startidx = 3
+		case "static_net_params", "oscillator":
+			prefix = prefix + "/" + strings.Title(respsegs[1])
+			startidx = 2
 		default:
-			log.Infof("Unknown Status key: %s", respsegs[0])
+			startidx = 1
 		}
-	} else {
-		log.Infof("Unknown Status: %s", status)
-	}
+		_ = parseRadio(prefix, respsegs[startidx:])
+	case "transmit":
+	case "waveform":
+	case "xvtr":
+	case "atu":
+	case "amplifier":
+	case "memories":
+	case "slice":
+	case "foundation":
+	case "gps":
+	case "scu":
+	case "tx":
+	case "eq":
+		switch respsegs[1] {
+		case "rx", "rxsc":
+			prefix = prefix + "/" + strings.Title(respsegs[1])
+			startidx = 2
+			_ = simpleSplit(prefix, " ", respsegs[2:])
+		default:
+			log.Infof("Unexpected case for eq: %v", respsegs)
 
+		}
+	case "usb_cable":
+	case "interlock":
+		_ = simpleSplit(respsegs[0], " ", respsegs[1:])
+	default:
+		log.Infof("Unknown Status key: %s", respsegs[0])
+	}
 }
