@@ -73,7 +73,6 @@ func processStatus(handle uint32, status string) {
 	if len(respsegs) == 2 {
 		switch respsegs[0] {
 		case "radio":
-			// list := simpleSplit(respsegs[0], " ", respsegs[1])
 			_ = parseRadio(respsegs[0], " ", respsegs[1])
 		case "transmit":
 		case "waveform":
@@ -87,8 +86,15 @@ func processStatus(handle uint32, status string) {
 		case "scu":
 		case "tx":
 		case "eq":
+			eqparts := strings.SplitN(respsegs[1], " ", 2)
+			if eqparts[0] == "rx" || eqparts[0] == "rxsc" {
+				topic := respsegs[0] + "/" + strings.Title(eqparts[0])
+				_ = simpleSplit(topic, " ", eqparts[1])
+
+			}
 		case "usb_cable":
 		case "interlock":
+			_ = simpleSplit(respsegs[0], " ", respsegs[1])
 		default:
 			log.Infof("Unknown Status key: %s", respsegs[0])
 		}
