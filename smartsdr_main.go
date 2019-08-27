@@ -70,10 +70,6 @@ func StartFdvRxer(vif *VitaInterface) {
 	go StResamp24to8F(ch[chp], ch[chp+1], 256)
 	chp++
 
-	fdv, _ := FreedvOpen(FREEDV_MODE_700C)
-	go StFreedvRxF(ch[chp], ch[chp+1], fdv)
-	chp++
-
 	/* Start 8Khz to 24Khz stage */
 	go StResamp8to24F(ch[chp], ch[chp+1], 256)
 	chp++
@@ -157,18 +153,6 @@ func main() {
 	api.RegisterStatusHandler("", func(handle uint32, status string) {
 		fmt.Println(status)
 	})
-
-	/* Open waveform configuration file and configure waveform */
-	fmt.Println("Setting up Waveform:")
-	configFile, err := os.Open("FreeDV.cfg")
-	if err != nil {
-		topError(err)
-	}
-	defer configFile.Close()
-	err = RegisterWaveform(api, configFile)
-	if err != nil {
-		topError(err)
-	}
 
 	/* Set up VITA stream handler */
 	connVitaLocal, err := net.ResolveUDPAddr("udp", "0.0.0.0:4999")
