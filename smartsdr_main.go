@@ -154,36 +154,6 @@ func main() {
 		fmt.Println(status)
 	})
 
-	/* Set up VITA stream handler */
-	connVitaLocal, err := net.ResolveUDPAddr("udp", "0.0.0.0:4999")
-	if err != nil {
-		topError(err)
-	}
-	connVitaRadio, err := net.ResolveUDPAddr("udp", radio.ip+":4991")
-	if err != nil {
-		topError(err)
-	}
-
-	vitaListener, err := InitVitaListener(connVitaLocal, connVitaRadio)
-	if err != nil {
-		topError(err)
-	}
-
-	/*vitaListener.Subscribers[0x81000000] = func(pkt *VitaIFData, pool *VitaBufferPool) {
-		fmt.Println("Got VITA49 Packet. Samples: ", len(pkt.DataBytes)/8)
-		pool.releasePB(pkt.RawPacketBuffer, pkt)
-	}*/
-
-	StartFdvRxer(vitaListener)
-	go func() {
-		serr := vitaListener.VitaListenLoop()
-		if serr != nil {
-			fmt.Println("Error:", serr)
-		}
-	}()
-
-	go vitaListener.VitaSenderLoop()
-
 	time.Sleep(time.Second * 100)
 	os.Exit(0)
 }
