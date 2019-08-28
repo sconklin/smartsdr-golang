@@ -166,6 +166,9 @@ func main() {
 		DumpConfig(conf)
 	}
 
+	// get the list of radio things to subscribe to
+	subs, err := ReadRadioSubs()
+
 	// TODO put this in a loop so radios can come and go
 	/* Discover a radio */
 	radio, err := DiscoverRadio(10 * time.Second)
@@ -195,18 +198,10 @@ func main() {
 	/* Register status handler to print all status messages */
 	api.RegisterStatusHandler("", processStatus)
 
-	/* Subscribe to some things */
-	api.DoCommand("sub xvtr all", time.Millisecond*100)
-	api.DoCommand("sub atu all", time.Millisecond*100)
-	api.DoCommand("sub amplifier all", time.Millisecond*100)
-	api.DoCommand("sub memories all", time.Millisecond*100)
-	api.DoCommand("sub slice all", time.Millisecond*100)
-	api.DoCommand("sub foundation all", time.Millisecond*100)
-	api.DoCommand("sub gps all", time.Millisecond*100)
-	api.DoCommand("sub radio all", time.Millisecond*100)
-	api.DoCommand("sub scu all", time.Millisecond*100)
-	api.DoCommand("sub tx all", time.Millisecond*100)
-	api.DoCommand("sub usb_cable all", time.Millisecond*100)
+	/* Subscribe to the configured things */
+	for _, sub := range subs {
+		api.DoCommand(fmt.Sprintf("sub %s all", sub), time.Millisecond*100)
+	}
 
 	for {
 		time.Sleep(time.Second * 1)

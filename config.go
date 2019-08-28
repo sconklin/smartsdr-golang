@@ -3,7 +3,10 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
+	"path/filepath"
+	"strings"
 )
 
 // Radio related represents the radio information we can subscribe to
@@ -50,6 +53,41 @@ func ReadConfig(jsonFileName string) (*Config, error) {
 	}
 
 	return &config, nil
+}
+
+func ReadRadioSubs() ([]string, error) {
+
+	var subs []string
+
+	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
+		log.Errorf("Subs Dir Error: %v", err)
+		return nil, err
+	}
+
+	fpath := filepath.Join(dir, conf.Radio.SubsFile)
+	if err != nil {
+		log.Errorf("Subs path Error: %v", err)
+		return nil, err
+	}
+
+	content, err := ioutil.ReadFile(fpath)
+	if err != nil {
+		log.Errorf("Unable to read Radio Subs File %s", fpath)
+		return nil, err
+	}
+
+	lines := strings.Split(string(content), "\n")
+
+	// TODO remove blank lines
+	for _, line := range lines {
+		val := strings.TrimSpace(line)
+		if val != "" {
+			subs = append(subs, val)
+		}
+	}
+	log.Debugf("Radio Sub List: %v", subs)
+	return subs, nil
 }
 
 // DumpConfig prints the config information
