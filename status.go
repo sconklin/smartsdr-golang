@@ -9,16 +9,21 @@ type TopicPub struct {
 	Value string
 }
 
-// parseResponse parses lines with the radio keyword
-func parseResponse(prefixTokens int, tokens []string) []TopicPub {
+func autoParseResponse(tokens []string) []TopicPub {
 	var topics []TopicPub
 	prefix := ""
+	idx := 0
 
-	for _, text := range tokens[0:prefixTokens] {
-		prefix = prefix + "/" + text
+	// for as long as we have fields with no "=" at the beginning, append them to the topic
+	for _, token := range tokens {
+		if strings.Contains(token, "=") {
+			break
+		}
+		prefix = prefix + strings.TrimSpace(token) + "/"
+		idx = idx + 1
 	}
 
-	for _, pair := range tokens[prefixTokens:] {
+	for _, pair := range tokens[idx:] {
 		if strings.TrimSpace(pair) == "" {
 			continue
 		}
@@ -26,7 +31,6 @@ func parseResponse(prefixTokens int, tokens []string) []TopicPub {
 		var value string
 
 		parts := strings.Split(pair, "=")
-
 		if len(parts) == 2 {
 			if len(strings.TrimSpace(parts[1])) == 0 {
 				value = ""
@@ -37,7 +41,7 @@ func parseResponse(prefixTokens int, tokens []string) []TopicPub {
 			log.Infof("%d parts in parsing %v", len(parts), parts)
 		}
 
-		topic := strings.Title(prefix) + "/" + strings.Title(parts[0])
+		topic := strings.Title(prefix) + strings.Title(parts[0])
 		log.Infof("%s = %s", topic, value)
 		nt := TopicPub{topic, value}
 		topics = append(topics, nt)
@@ -85,27 +89,10 @@ func processStatus(handle uint32, status string) {
 	// This will move to an MQTT publisher
 	// log.Infof("Status: %s", status)
 	respsegs := strings.Split(status, " ")
-	pt := 0
 
 	switch respsegs[0] {
-	case "radio":
-		switch respsegs[1] {
-		case "filter_sharpness":
-			pt = 3
-		case "static_net_params", "oscillator":
-			pt = 2
-		default:
-			pt = 1
-		}
-		_ = parseResponse(pt, respsegs)
-	case "transmit", "waveform", "atu", "interlock":
-		_ = parseResponse(1, respsegs)
-	case "xvtr", "slice", "eq":
-		// next field is id of the thing
-		_ = parseResponse(2, respsegs)
-	case "usb_cable":
-		// TODO USB needs its own parser
-		_ = parseResponse(4, respsegs)
+	case "radio", "transmit", "waveform", "atu", "interlock", "xvtr", "slice", "eq", "usb_cable":
+		_ = autoParseResponse(respsegs)
 	case "amplifier":
 		log.Infof("Status: %s", status)
 	case "memories":
