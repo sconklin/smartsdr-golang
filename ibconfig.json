@@ -1,0 +1,18 @@
+{
+    "Radio": {
+	    "radio_sub_list_file": "radiosubs.conf",
+	    "include_messages": "true"
+	},
+    "Mqtt": {
+        "pub_topic_prefix" : "AI4QR/Home/Ham/Radio/Flex",
+	        "topic_read":   "AI4QR/Home/Ham/Radio/Flex/Command",
+	        "broker":       "something.cloudmqtt.com",
+	        "broker_user": "auserstring",
+	        "broker_pass": "auserpassword",
+	        "broker_port": "17592",
+	        "only_publish_on_change": "true",
+            "freq_error_change": "1.0E-12",
+            "topic_pub_list_file": "topics.conf",
+            "topic_dump_file": "topics.list"
+	}
+}

@@ -6,11 +6,18 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"net"
 	"os"
+	"path/filepath"
 	"time"
+
+	logger "github.com/sconklin/go-logger"
 )
+
+// Global config structure accessible to all
+var conf *Config
 
 func topError(err error) {
 	fmt.Printf("Error in main: %v\n", err)
@@ -125,6 +132,41 @@ func StartVitaEchoer2(vif *VitaInterface) {
 
 func main() {
 
+	var verbose = flag.Bool("v", false, "Enable verbose output")
+	var debug = flag.Bool("d", false, "Enable debug output")
+	flag.Parse()
+
+	if *debug {
+		logger.ChangePackageLogLevel("main", logger.DebugLevel)
+	} else if *verbose {
+		logger.ChangePackageLogLevel("main", logger.InfoLevel)
+	} else {
+		logger.ChangePackageLogLevel("main", logger.ErrorLevel)
+	}
+
+	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
+		fmt.Println("Dir Error: ", err)
+		os.Exit(1)
+	}
+
+	configpath := filepath.Join(dir, "ibconfig.json")
+	if err != nil {
+		fmt.Println("ConfigPath Error: ", err)
+		os.Exit(1)
+	}
+
+	conf, err = ReadConfig(configpath)
+	if err != nil {
+		fmt.Println("ReadConfig Error: ", err)
+		os.Exit(1)
+	}
+
+	if *verbose {
+		DumpConfig(conf)
+	}
+
+	// TODO put this in a loop so radios can come and go
 	/* Discover a radio */
 	radio, err := DiscoverRadio(10 * time.Second)
 	if err != nil {
