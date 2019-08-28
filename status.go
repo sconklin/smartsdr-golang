@@ -9,32 +9,23 @@ type TopicPub struct {
 	Value string
 }
 
-// parses a line full of "key=value" pairs separated by a separator
-func simpleSplit(prefix string, sep string, tokens []string) []TopicPub {
+// parseResponse parses lines with the radio keyword
+func parseResponse(prefixTokens int, tokens []string) []TopicPub {
 	var topics []TopicPub
-	for _, pair := range tokens {
+
+	prefix := ""
+
+	for _, text := range tokens[0:prefixTokens] {
+		prefix = prefix + "/" + text
+	}
+
+	for _, pair := range tokens[prefixTokens+1:] {
 		if strings.TrimSpace(pair) == "" {
 			continue
 		}
-		parts := strings.Split(pair, "=")
-		if len(parts) != 2 {
-			log.Infof("simpleSplit: Bad parse of: %s", pair)
-		}
-		topic := strings.Title(prefix) + "/" + strings.Title(parts[0])
-		value := parts[1]
-		log.Infof("%s = %s", topic, value)
-		nt := TopicPub{topic, value}
-		topics = append(topics, nt)
-	}
-	return topics
-}
 
-// parseRadio parses lines with the radio keyword
-func parseRadio(prefix string, tokens []string) []TopicPub {
-	var topics []TopicPub
-
-	for _, pair := range tokens {
 		var value string
+
 		parts := strings.Split(pair, "=")
 
 		if len(parts) == 2 {
@@ -59,51 +50,30 @@ func processStatus(handle uint32, status string) {
 	// This will move to an MQTT publisher
 	log.Infof("Status: %s", status)
 	respsegs := strings.Split(status, " ")
-	var startidx = 1
-	prefix := respsegs[0]
+	pt := 0
 
 	switch respsegs[0] {
 	case "radio":
 		switch respsegs[1] {
 		case "filter_sharpness":
-			prefix = prefix + "/" + strings.Title(respsegs[1]) + "/" + strings.Title(respsegs[2])
-			startidx = 3
+			pt = 3
 		case "static_net_params", "oscillator":
-			prefix = prefix + "/" + strings.Title(respsegs[1])
-			startidx = 2
+			pt = 2
 		default:
-			startidx = 1
+			pt = 1
 		}
-		_ = parseRadio(prefix, respsegs[startidx:])
+		_ = parseResponse(pt, respsegs)
 	case "transmit", "waveform", "atu", "interlock":
-		_ = simpleSplit(respsegs[0], " ", respsegs[1:])
-	case "xvtr":
-		// next field is xvtr number
-		prefix = prefix + "/" + strings.Title(respsegs[1])
-		startidx = 2
-		_ = simpleSplit(prefix, " ", respsegs[2:])
+		_ = parseResponse(1, respsegs)
+	case "xvtr", "slice", "eq", "usb_cable":
+		// next field is id of the thing
+		_ = parseResponse(2, respsegs)
 	case "amplifier":
 	case "memories":
-	case "slice":
-		// next field is slice number
-		prefix = prefix + "/" + strings.Title(respsegs[1])
-		startidx = 2
-		_ = simpleSplit(prefix, " ", respsegs[2:])
 	case "foundation":
 	case "gps":
 	case "scu":
 	case "tx":
-	case "eq":
-		switch respsegs[1] {
-		case "rx", "rxsc", "tx", "txsc":
-			prefix = prefix + "/" + strings.Title(respsegs[1])
-			startidx = 2
-			_ = simpleSplit(prefix, " ", respsegs[2:])
-		default:
-			log.Infof("Unexpected case for eq: %v", respsegs)
-
-		}
-	case "usb_cable":
 	default:
 		log.Infof("Unknown Status key: %s", respsegs[0])
 	}
