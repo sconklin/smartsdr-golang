@@ -41,7 +41,7 @@ func autoParseResponse(tokens []string) []TopicPub {
 			log.Infof("%d parts in parsing %v", len(parts), parts)
 		}
 
-		topic := strings.Title(prefix) + strings.Title(parts[0])
+		topic := prefix + parts[0]
 		log.Infof("%s = %s", topic, value)
 		nt := TopicPub{topic, value}
 		topics = append(topics, nt)
@@ -55,7 +55,7 @@ func parseGps(status string) []TopicPub {
 
 	parts := strings.SplitN(status, " ", 2)
 
-	prefix = strings.Title(parts[0])
+	prefix = parts[0]
 	tokens := strings.Split(parts[1], "#")
 
 	for _, pair := range tokens {
@@ -77,7 +77,7 @@ func parseGps(status string) []TopicPub {
 			log.Infof("XXXXXXXXXXXX %d parts in parsing %v", len(parts), parts)
 		}
 
-		topic := strings.Title(prefix) + "/" + strings.Title(parts[0])
+		topic := prefix + "/" + parts[0]
 		log.Infof("%s = %s", topic, value)
 		nt := TopicPub{topic, value}
 		topics = append(topics, nt)
