@@ -85,13 +85,61 @@ func parseGps(status string) []TopicPub {
 	return topics
 }
 
+func parseProfile(status string) []TopicPub {
+	var topics []TopicPub
+	prefix := ""
+
+	parts := strings.SplitN(status, " ", 3)
+
+	prefix = parts[0] + "/" + parts[1]
+
+	payload := strings.Split(parts[2], "=")
+
+	prefix = prefix + "/" + payload[0]
+
+	// this will be either "list" or "current", in either case the following works
+
+	value := payload[1]
+	log.Infof("%s = %s", prefix, value)
+	nt := TopicPub{prefix, value}
+	topics = append(topics, nt)
+	return topics
+}
+
+func parseClient(status string) []TopicPub {
+	// client 0xDE997CDB connected local_ptt=1 client_id=C97FB7E3-C2D7-4AB7-AC8B-417A3F9ECEF5 program=SmartSDR-Win station=DESKTOP-M3NJRL1
+	// convert this into suitable mqtt topics
+	// perhaps .../client/connected/id 0xDE997CDB
+	//            /client/0xDE997CDB/local_ptt 1
+	//            /client/0xDE997CDB/client_id C97FB7E3-C2D7-4AB7-AC8B-417A3F9ECEF5
+	// ets
+	var topics []TopicPub
+	prefix := ""
+
+	parts := strings.SplitN(status, " ", 3)
+
+	prefix = parts[0] + "/" + parts[1]
+
+	payload := strings.Split(parts[2], "=")
+
+	prefix = prefix + "/" + payload[0]
+
+	// this will be either "list" or "current", in either case the following works
+
+	value := payload[1]
+	log.Infof("%s = %s", prefix, value)
+	nt := TopicPub{prefix, value}
+	topics = append(topics, nt)
+	return topics
+}
+
 func processStatus(handle uint32, status string) {
 	// This will move to an MQTT publisher
 	// log.Infof("Status: %s", status)
 	respsegs := strings.Split(status, " ")
 
 	switch respsegs[0] {
-	case "radio", "transmit", "waveform", "atu", "interlock", "xvtr", "slice", "eq", "usb_cable":
+	case "radio", "transmit", "waveform", "atu", "interlock", "xvtr", "slice", "eq", "usb_cable", "memory", "wan":
 		_ = autoParseResponse(respsegs)
 	case "amplifier":
 		log.Infof("Status: %s", status)
@@ -103,9 +151,14 @@ func processStatus(handle uint32, status string) {
 		_ = parseGps(status)
 	case "scu":
 		log.Infof("Status: %s", status)
-	case "tx":
+	case "profile":
+		_ = parseProfile(status)
+	case "client":
+		// Client needs a special handler
 		log.Infof("Status: %s", status)
+		_ = parseClient(status)
 	default:
 		log.Infof("Unknown Status key: %s", respsegs[0])
+		log.Infof("Status: %s", status)
 	}
 }
