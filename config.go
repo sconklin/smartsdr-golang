@@ -79,10 +79,10 @@ func ReadRadioSubs() ([]string, error) {
 
 	lines := strings.Split(string(content), "\n")
 
-	// TODO remove blank lines
+	// TODO remove blank lines and ones which are commented with '#'
 	for _, line := range lines {
 		val := strings.TrimSpace(line)
-		if val != "" {
+		if val != "" && !strings.HasPrefix(val, "#") {
 			subs = append(subs, val)
 		}
 	}
