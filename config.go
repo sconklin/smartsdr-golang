@@ -23,6 +23,7 @@ type Mqtt struct {
 	BrokerUser      string `json:"broker_user"`
 	BrokerPass      string `json:"broker_pass"`
 	BrokerPort      string `json:"broker_port"`
+	BrokerCert      string `json:"broker_cert"`
 	PubOnChange     string `json:"only_publish_on_change"`
 	FreqErrorChange string `json:"freq_error_change"`
 	TopicsFile      string `json:"topic_pub_list_file"`
@@ -102,6 +103,7 @@ func DumpConfig(conf *Config) {
 	fmt.Printf("    User:                 %s\n", conf.MqttI.BrokerUser)
 	fmt.Printf("    Pass:                 %s\n", conf.MqttI.BrokerPass)
 	fmt.Printf("    Port:                 %s\n", conf.MqttI.BrokerPort)
+	fmt.Printf("    Cert:                 %s\n", conf.MqttI.BrokerCert)
 	fmt.Printf("    Publish On Change?    %s\n", conf.MqttI.PubOnChange)
 	fmt.Printf("    Topics File           %s\n", conf.MqttI.TopicsFile)
 	fmt.Printf("    Topic Dump File:      %s\n", conf.MqttI.TopicDumpFile)

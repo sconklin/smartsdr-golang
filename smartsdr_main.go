@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0
  *
- * Copyright (C) 2018 Brady O'Brien. All Rights Reserved.
+ * Copyright (C) 2019 Brady O'Brien. All Rights Reserved.
+ * Modified by Steve Conklin
  */
 
 package main

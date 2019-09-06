@@ -10,6 +10,7 @@
 	        "broker_user": "auserstring",
 	        "broker_pass": "auserpassword",
 	        "broker_port": "17592",
+            "broker_cert": "/etc/ssl/certs/ca-certificates.crt",
 	        "only_publish_on_change": "true",
             "freq_error_change": "1.0E-12",
             "topic_pub_list_file": "topics.conf",
