@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0
  *
- * Copyright (C) 2018 Brady O'Brien. All Rights Reserved.
+ * Copyright (C) 2019 Brady O'Brien. All Rights Reserved.
+ * Modified by Steve Conklin
  */
 
 package main
@@ -168,6 +169,17 @@ func main() {
 
 	// get the list of radio things to subscribe to
 	subs, err := ReadRadioSubs()
+
+	errc := make(chan error)
+	mqttcmdc := make(chan string)
+
+	err = MqttInit(errc)
+	if err != nil {
+		topError(err)
+	}
+
+	// Start the MQTT thread
+	go MqttHandler(errc, mqttcmdc)
 
 	// TODO put this in a loop so radios can come and go
 	/* Discover a radio */
