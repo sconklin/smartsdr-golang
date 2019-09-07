@@ -1,13 +1,10 @@
 package main
 
 import (
+	"fmt"
+	"os"
 	"strings"
 )
-
-type TopicPub struct {
-	Topic string
-	Value string
-}
 
 func autoParseResponse(tokens []string) []TopicPub {
 	var topics []TopicPub
@@ -134,13 +131,14 @@ func parseClient(status string) []TopicPub {
 }
 
 func processStatus(handle uint32, status string) {
-	// This will move to an MQTT publisher
+	var toPub []TopicPub
+
 	// log.Infof("Status: %s", status)
 	respsegs := strings.Split(status, " ")
 
 	switch respsegs[0] {
 	case "radio", "transmit", "waveform", "atu", "interlock", "xvtr", "slice", "eq", "usb_cable", "memory", "wan":
-		_ = autoParseResponse(respsegs)
+		toPub = autoParseResponse(respsegs)
 	case "amplifier":
 		log.Infof("Status: %s", status)
 	case "memories":
@@ -148,7 +146,7 @@ func processStatus(handle uint32, status string) {
 	case "foundation":
 		log.Infof("Status: %s", status)
 	case "gps":
-		_ = parseGps(status)
+		toPub = parseGps(status)
 	case "scu":
 		log.Infof("Status: %s", status)
 	case "profile":
@@ -156,9 +154,18 @@ func processStatus(handle uint32, status string) {
 	case "client":
 		// Client needs a special handler
 		log.Infof("Status: %s", status)
-		_ = parseClient(status)
+		toPub = parseClient(status)
 	default:
 		log.Infof("Unknown Status key: %s", respsegs[0])
 		log.Infof("Status: %s", status)
+	}
+
+	for _, thing := range toPub {
+		err := MqttEnqueue(thing)
+		if err != nil {
+			// TODO something else
+			fmt.Println("Enqueue Error: ", err)
+			os.Exit(1)
+		}
 	}
 }

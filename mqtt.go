@@ -22,6 +22,11 @@ type mqttPubInfo struct {
 	WhiteListed bool
 }
 
+type TopicPub struct {
+	Topic string
+	Value string
+}
+
 var mqttClient *client.Client
 var topicmap map[string]mqttPubInfo
 var topicDumpFileName string
@@ -63,6 +68,8 @@ func ReadPubTopics() error {
 
 func MqttInit(errc chan<- error) error {
 	log.Info("MQTTInit")
+	topicmap = make(map[string]mqttPubInfo)
+
 	// if there's a publish topic list file then get those topics into a list
 	// otherwise, publish everything
 	err := ReadPubTopics()
@@ -78,15 +85,11 @@ func MqttInit(errc chan<- error) error {
 			return err
 		}
 
-		topicDumpFileName = filepath.Join(dir, conf.Radio.SubsFile)
-		if err != nil {
-			log.Errorf("Topic Dump path Error: %v", err)
-			return err
-		}
-
+		topicDumpFileName = filepath.Join(dir, conf.MqttI.TopicDumpFile)
 	} else {
 		topicDumpFileName = ""
 	}
+	log.Infof("Topic Dump File = <%s>", topicDumpFileName)
 
 	// open the mqtt client
 	mqttClient = client.New(&client.Options{
@@ -97,11 +100,11 @@ func MqttInit(errc chan<- error) error {
 
 	defer mqttClient.Terminate()
 
-	log.Info("MQTT Cert: %s", conf.MqttI.BrokerCert)
+	log.Infof("MQTT Cert: %s", conf.MqttI.BrokerCert)
 	// Read the certificate file.
 	b, err := ioutil.ReadFile(conf.MqttI.BrokerCert)
 	if err != nil {
-		errc <- err
+		return err
 	}
 
 	roots := x509.NewCertPool()
@@ -121,15 +124,16 @@ func MqttInit(errc chan<- error) error {
 	err = mqttClient.Connect(&client.ConnectOptions{
 		Network:   "tcp",
 		Address:   ipstr,
-		ClientID:  []byte("netrotor"),
+		ClientID:  []byte("ssdr"),
 		UserName:  []byte(conf.MqttI.BrokerUser),
 		Password:  []byte(conf.MqttI.BrokerPass),
 		TLSConfig: tlsConfig,
 	})
 	if err != nil {
-		errc <- err
+		return err
 	}
 
+	log.Info("MQTT Init Done")
 	return nil
 }
 
@@ -170,9 +174,12 @@ func MqttPublish(topicSuffix string, data string) error {
 	return err
 }
 
-func MqttEnqueue(topicSuffix string, value string) error {
+func MqttEnqueue(topicdata TopicPub) error {
 	var publish bool
+	topicSuffix := topicdata.Topic
+	value := topicdata.Value
 
+	log.Infof("Enqueue %s = %s", topicSuffix, value)
 	oldinfo, present := topicmap[topicSuffix]
 	if present {
 		/* we've sent this before */
@@ -196,11 +203,11 @@ func MqttEnqueue(topicSuffix string, value string) error {
 		topicmap[topicSuffix] = ts
 		/* rewrite the dump file of topics */
 		if topicDumpFileName != "" {
-			f, err := os.Create("/tmp/dat2")
+
+			f, err := os.Create(topicDumpFileName)
 			if err != nil {
 				return err
 			}
-			defer f.Close()
 
 			w := bufio.NewWriter(f)
 
@@ -208,11 +215,28 @@ func MqttEnqueue(topicSuffix string, value string) error {
 				if !v.WhiteListed {
 					fmt.Fprintf(w, "#")
 				}
-				fmt.Fprintf(w, "%s/n", k)
+				fmt.Fprintf(w, "%s\n", k)
 			}
 			w.Flush()
-		}
+			f.Close()
 
+			valueFileName := topicDumpFileName + ".values"
+			f, err = os.Create(valueFileName)
+			if err != nil {
+				return err
+			}
+
+			w = bufio.NewWriter(f)
+
+			for k, v := range topicmap {
+				if !v.WhiteListed {
+					fmt.Fprintf(w, "#")
+				}
+				fmt.Fprintf(w, "%s = %s\n", k, v.Value)
+			}
+			w.Flush()
+			f.Close()
+		}
 	}
 
 	if publish {
