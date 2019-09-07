@@ -35,11 +35,11 @@ func autoParseResponse(tokens []string) []TopicPub {
 				value = parts[1]
 			}
 		} else {
-			log.Infof("%d parts in parsing %v", len(parts), parts)
+			log.Debugf("%d parts in parsing %v", len(parts), parts)
 		}
 
 		topic := prefix + parts[0]
-		log.Infof("%s = %s", topic, value)
+		log.Debugf("%s = %s", topic, value)
 		nt := TopicPub{topic, value}
 		topics = append(topics, nt)
 	}
@@ -71,11 +71,11 @@ func parseGps(status string) []TopicPub {
 				value = parts[1]
 			}
 		} else {
-			log.Infof("XXXXXXXXXXXX %d parts in parsing %v", len(parts), parts)
+			log.Debugf("XXXXXXXXXXXX %d parts in parsing %v", len(parts), parts)
 		}
 
 		topic := prefix + "/" + parts[0]
-		log.Infof("%s = %s", topic, value)
+		log.Debugf("%s = %s", topic, value)
 		nt := TopicPub{topic, value}
 		topics = append(topics, nt)
 	}
@@ -97,7 +97,7 @@ func parseProfile(status string) []TopicPub {
 	// this will be either "list" or "current", in either case the following works
 
 	value := payload[1]
-	log.Infof("%s = %s", prefix, value)
+	log.Debugf("%s = %s", prefix, value)
 	nt := TopicPub{prefix, value}
 	topics = append(topics, nt)
 	return topics
@@ -124,7 +124,7 @@ func parseClient(status string) []TopicPub {
 	// this will be either "list" or "current", in either case the following works
 
 	value := payload[1]
-	log.Infof("%s = %s", prefix, value)
+	log.Debugf("%s = %s", prefix, value)
 	nt := TopicPub{prefix, value}
 	topics = append(topics, nt)
 	return topics
@@ -133,7 +133,6 @@ func parseClient(status string) []TopicPub {
 func processStatus(handle uint32, status string) {
 	var toPub []TopicPub
 
-	// log.Infof("Status: %s", status)
 	respsegs := strings.Split(status, " ")
 
 	switch respsegs[0] {
