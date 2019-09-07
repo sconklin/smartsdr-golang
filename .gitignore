@@ -1,4 +1,8 @@
 .vscode
 ssdr-infobroker
 _obj
+topics.conf
+topics.list
+topics.list.values
+ibconfig.json
 
