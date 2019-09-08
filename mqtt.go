@@ -30,6 +30,9 @@ type TopicPub struct {
 var mqttClient *client.Client
 var topicmap map[string]mqttPubInfo
 var topicDumpFileName string
+var pubLogFileName string
+var pubLogFile *os.File
+var pubLogWriter *bufio.Writer
 
 func ReadPubTopics() error {
 
@@ -77,19 +80,35 @@ func MqttInit(errc chan<- error) error {
 		return err
 	}
 
+	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
+		log.Errorf("Dir Error: %v", err)
+		return err
+	}
+
 	// If there's a dump file named, then assemble the filename
 	if conf.MqttI.TopicDumpFile != "" {
-		dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
-		if err != nil {
-			log.Errorf("Topic Dump Dir Error: %v", err)
-			return err
-		}
-
 		topicDumpFileName = filepath.Join(dir, conf.MqttI.TopicDumpFile)
 	} else {
 		topicDumpFileName = ""
 	}
 	log.Infof("Topic Dump File = <%s>", topicDumpFileName)
+
+	// if there's a log file for MQTT publishing, then open it
+	if conf.MqttI.PubLogFile != "" {
+		pubLogFileName = filepath.Join(dir, conf.MqttI.PubLogFile)
+		f, err := os.Create(pubLogFileName)
+		if err != nil {
+			return err
+		}
+		w := bufio.NewWriter(f)
+		pubLogFile = f
+		pubLogWriter = w
+		log.Infof("Pub Log File = <%s>", pubLogFileName)
+	} else {
+		pubLogFileName = ""
+		log.Info("No Pub Log File")
+	}
 
 	// open the mqtt client
 	mqttClient = client.New(&client.Options{
@@ -137,6 +156,14 @@ func MqttInit(errc chan<- error) error {
 	return nil
 }
 
+func MqttClose() {
+	// if there's a log file for MQTT publishing, then close it
+	if pubLogFileName != "" {
+		pubLogFile.Close()
+		pubLogWriter.Flush()
+	}
+}
+
 func MqttHandler(errc chan<- error, mqttcmdc chan<- string) {
 
 	log.Info("MQTTHandler")
@@ -164,8 +191,15 @@ func MqttHandler(errc chan<- error, mqttcmdc chan<- string) {
 
 func MqttPublish(topicSuffix string, data string) error {
 	/* Publish */
-	topic := conf.MqttI.PubTopicPrefix + topicSuffix
+	topic := conf.MqttI.PubTopicPrefix + "/" + topicSuffix
 	log.Infof(" MQTT Server: publishing %s = %s", topic, data)
+
+	if pubLogFileName != "" {
+		fmt.Fprintf(pubLogWriter, "%s = %s\n", topic, data)
+		pubLogWriter.Flush()
+		log.Info(" MQTT Server: Logged publishing")
+	}
+
 	err := mqttClient.Publish(&client.PublishOptions{
 		QoS:       mqtt.QoS1,
 		TopicName: []byte(topic),

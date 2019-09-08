@@ -22,6 +22,7 @@ var conf *Config
 
 func topError(err error) {
 	fmt.Printf("Error in main: %v\n", err)
+	MqttClose()
 	os.Exit(1)
 }
 
@@ -216,8 +217,14 @@ func main() {
 	}
 
 	for {
-		time.Sleep(time.Second * 1)
+		select {
+		case myerr := <-errc:
+			// We got an error from somewhere
+			topError(myerr)
+		case <-time.After(1 * time.Second):
+		}
 	}
 
+	MqttClose()
 	os.Exit(0)
 }

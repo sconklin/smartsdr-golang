@@ -14,6 +14,7 @@
 	        "only_publish_on_change": "true",
             "freq_error_change": "1.0E-12",
             "topic_pub_list_file": "topics.conf",
-            "topic_dump_file": "topics.list"
+            "topic_dump_file": "topics.list",
+            "pub_log_file": "mqtt.log"
 	}
 }

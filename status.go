@@ -153,7 +153,8 @@ func processStatus(handle uint32, status string) {
 	case "client":
 		// Client needs a special handler
 		log.Infof("Status: %s", status)
-		toPub = parseClient(status)
+		// toPub = parseClient(status)
+		toPub = autoParseResponse(respsegs)
 	default:
 		log.Infof("Unknown Status key: %s", respsegs[0])
 		log.Infof("Status: %s", status)

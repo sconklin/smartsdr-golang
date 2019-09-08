@@ -28,6 +28,7 @@ type Mqtt struct {
 	FreqErrorChange string `json:"freq_error_change"`
 	TopicsFile      string `json:"topic_pub_list_file"`
 	TopicDumpFile   string `json:"topic_dump_file"`
+	PubLogFile      string `json:"pub_log_file"`
 }
 
 // Config Represents the top-level config structure
@@ -107,4 +108,5 @@ func DumpConfig(conf *Config) {
 	fmt.Printf("    Publish On Change?    %s\n", conf.MqttI.PubOnChange)
 	fmt.Printf("    Topics File           %s\n", conf.MqttI.TopicsFile)
 	fmt.Printf("    Topic Dump File:      %s\n", conf.MqttI.TopicDumpFile)
+	fmt.Printf("    Publish Log File:     %s\n", conf.MqttI.PubLogFile)
 }
